@@ -1,48 +1,76 @@
-document.getElementById('submit').addEventListener('click', calculatePrice);
+document.getElementById('submit').addEventListener('click', () => {
+    const name = document.getElementById('name')?.value.trim();
+    let price = parseFloat(document.getElementById('startingBid')?.value);
 
-function calculatePrice() {
-    let price = 100;  // Starting bid
+    if (!name || isNaN(price)) {
+        alert('Please enter both a valid name and starting bid.');
+        return;
+    }
 
     // Education factor
-    const education = document.getElementById('education').value;
-    if (education === 'bachelor') price *= 1.5;
-    else if (education === 'college') price *= 1.2;
-    else if (education === 'high_school') price *= 1.05;
-    else if (education === 'middle_school') price *= 0.9;
+    const education = parseFloat(document.getElementById('education').value);
+    if (!isNaN(education)) price *= education;
 
     // Family net worth factor
-    const networth = document.getElementById('networth').value;
-    if (networth === 'upper_class') price *= 2;
-    else if (networth === 'middle_class') price *= 1.5;
-    else if (networth === 'lower_class') price *= 1.2;
+    const networth = parseFloat(document.getElementById('networth').value);
+    if (!isNaN(networth)) price *= networth;
 
     // Caste factor
+    const casteFactor = {
+        brahmin: 100,
+        kshatriya: 50,
+        vaishya: 20,
+        shudra: 10,
+        varna: -50
+    };
     const caste = document.getElementById('caste').value;
-    if (caste === 'brahmin') price += 100;
-    else if (caste === 'kshatriya') price += 50;
-    else if (caste === 'vaishya') price += 20;
-    else if (caste === 'shudra') price += 10;
-    else if (caste === 'varna') price -= 50;
+    price += casteFactor[caste] || 0;
 
-    // Skills factor
-    if (document.getElementById('instrument').checked) price += 10;
-    if (document.getElementById('cook').checked) price += 20;
-    if (document.getElementById('easygoing').checked) price += 15;
-    if (document.getElementById('sing').checked) price += 10;
+    // Skills factor (using filter and reduce)
+    const skills = ['instrument', 'cook', 'easygoing', 'sing'];
+    price += skills.filter(skill => document.getElementById(skill).checked)
+                   .reduce((total, skill) => {
+                       switch (skill) {
+                           case 'instrument': return total + 10;
+                           case 'cook': return total + 20;
+                           case 'easygoing': return total + 15;
+                           case 'sing': return total + 10;
+                           default: return total;
+                       }
+                   }, 0);
 
-    // Age factor
+    // Age factor (using forEach)
+    const ageFactors = {
+        '18_23': 1.5,
+        '24_27': 1.2,
+        '28': 0.95
+    };
     const age = document.querySelector('input[name="age"]:checked')?.value;
-    if (age === '18_23') price *= 1.5;
-    else if (age === '24_27') price *= 1.2;
-    else if (age === '28') price *= 0.95;
+    if (age && ageFactors[age]) price *= ageFactors[age];
 
-    // Reputation factor
-    if (document.getElementById('parent_gossip').checked) price *= 0.85;
-    if (document.getElementById('character_gossip').checked) price *= 0.9;
-    if (document.getElementById('general_gossip').checked) price -= 20;
+    // Reputation factor (using for loop)
+    const reputation = ['parent_gossip', 'character_gossip', 'general_gossip'];
+    for (let i = 0; i < reputation.length; i++) {
+        const repValue = reputation[i];
+        if (document.getElementById(repValue).checked) {
+            if (repValue === 'general_gossip') price -= 20;
+            else price *= repValue === 'parent_gossip' ? 0.85 : 0.9;
+        }
+    }
 
-    // Display the final price
-    alert('The final dowry price is: $' + price.toFixed(2));
-}
+    // Love letter
+    const loveLetter = document.getElementById('love_letter')?.value || '';
 
-document.querySelector('.container').style.backgroundColor = '#f4a8c8';
+    // Create an object with the results
+    const person = {
+        name,
+        price: price.toFixed(2),
+        loveLetter
+    };
+
+    // Display the final price on the page
+    document.getElementById('result').innerHTML = `
+        <p>The final dowry price for ${person.name} is: $${person.price}</p>
+        <p>Your love letter: ${person.loveLetter}</p>
+    `;
+});
